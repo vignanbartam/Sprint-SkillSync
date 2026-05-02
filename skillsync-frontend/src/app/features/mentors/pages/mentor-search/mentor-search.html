@@ -1,0 +1,139 @@
+<section class="page-shell">
+  <div class="search-hero">
+    <div>
+      <span class="eyebrow">Search mentors</span>
+      <h1 class="section-title">Find mentors by skill</h1>
+      <p class="section-copy">Filter approved mentors by skill, profile details, rating, and session price.</p>
+    </div>
+    <input
+      type="search"
+      placeholder="Search by name, ID, email, skill, or keyword"
+      [value]="search()"
+      (input)="updateSearch($any($event.target).value)"
+    />
+  </div>
+
+  @if (successMessage()) {
+    <div class="message success">{{ successMessage() }}</div>
+  }
+
+  @if (errorMessage()) {
+    <div class="message error">{{ errorMessage() }}</div>
+  }
+
+  <div class="mentor-search-layout">
+    <aside class="filter-panel">
+      <div class="filter-panel__head">
+        <h2>Skills</h2>
+        <button class="btn-ghost" type="button" (click)="clearFilters()">Clear</button>
+      </div>
+      <div class="skill-filter-list">
+        @for (skill of skills(); track skill.id) {
+          <label class="skill-filter">
+            <input
+              type="checkbox"
+              [checked]="selectedSkillIds().includes(skill.id)"
+              (change)="toggleSkill(skill.id, $any($event.target).checked)"
+            />
+            <span>{{ skill.name }}</span>
+          </label>
+        } @empty {
+          <p class="section-copy">No skills available.</p>
+        }
+      </div>
+    </aside>
+
+    <section class="mentor-results">
+      <div class="results-toolbar">
+        <strong>{{ filteredMentors().length }} mentors found</strong>
+        <span>Page {{ page() }} of {{ pageCount() }}</span>
+      </div>
+
+      @if (loading()) {
+        <section class="mentor-result">
+          <p class="section-copy">Loading mentors...</p>
+        </section>
+      } @else {
+        @for (mentor of paginatedMentors(); track mentor.id) {
+          <article class="mentor-result">
+            <div class="mentor-result__photo">
+              @if (mentor.profilePictureUrl) {
+                <img [src]="mentor.profilePictureUrl" [alt]="(mentor.name || mentor.email) + ' profile picture'" />
+              } @else {
+                <span>{{ (mentor.name || mentor.email).charAt(0).toUpperCase() }}</span>
+              }
+            </div>
+
+            <div class="mentor-result__body">
+              <div class="mentor-result__top">
+                <div>
+                  <span class="id-chip">ID {{ displayId(mentor.id) }}</span>
+                  <h2>{{ mentor.name || mentor.email }}</h2>
+                  <p>{{ mentor.email }}</p>
+                </div>
+                <div class="mentor-result__rating">
+                  <app-rating-stars [rating]="mentor.averageRating"></app-rating-stars>
+                  <strong>{{ mentor.averageRating || 0 | number:'1.1-1' }}</strong>
+                  <span>{{ reviewSummary(mentor) }}</span>
+                </div>
+              </div>
+
+              <div class="mentor-details">
+                <span>Mentor ID {{ mentor.id }}</span>
+                @if (mentor.age) {
+                  <span>Age {{ mentor.age }}</span>
+                }
+                @if (mentor.mentorExperience) {
+                  <span>{{ mentor.mentorExperience }} years experience</span>
+                }
+                @if (mentor.phoneNumber) {
+                  <span>{{ mentor.phoneNumber }}</span>
+                }
+              </div>
+
+              <div class="chip-row">
+                @for (skill of skillNames(mentor.skillIds ?? []); track skill) {
+                  <span class="chip">{{ skill }}</span>
+                } @empty {
+                  <span class="chip">No approved skills listed</span>
+                }
+              </div>
+
+              <div class="price-options">
+                @for (plan of plansForMentor(mentor); track plan.key) {
+                  <button
+                    type="button"
+                    class="price-option"
+                    [class.active]="selectedPlan(mentor).key === plan.key"
+                    (click)="selectPlan(mentor.id, plan)"
+                  >
+                    <strong>{{ plan.durationMinutes }} min | {{ plan.price | currency:'USD':'symbol':'1.0-0' }}</strong>
+                    <span>{{ plan.label }}</span>
+                  </button>
+                }
+              </div>
+
+              <div class="mentor-result__actions">
+                <button class="btn" type="button" (click)="book(mentor)">Book</button>
+                <a class="btn-muted" [routerLink]="['/profile', mentor.id]">View Details</a>
+                @if (mentor.biodataUrl) {
+                  <a class="btn-ghost" [href]="mentor.biodataUrl" target="_blank" rel="noopener">Biodata</a>
+                }
+              </div>
+            </div>
+          </article>
+        } @empty {
+          <section class="mentor-result">
+            <p class="section-copy">No mentors matched your filters.</p>
+          </section>
+        }
+      }
+
+      <div class="pagination">
+        <button class="btn-muted" type="button" (click)="setPage(page() - 1)" [disabled]="page() === 1">Previous</button>
+        <span>Page {{ page() }} of {{ pageCount() }}</span>
+        <button class="btn-muted" type="button" (click)="setPage(page() + 1)" [disabled]="page() === pageCount()">Next</button>
+      </div>
+    </section>
+  </div>
+</section>

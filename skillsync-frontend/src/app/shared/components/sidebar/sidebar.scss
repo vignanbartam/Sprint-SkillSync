@@ -1,0 +1,42 @@
+.sidebar {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+  align-self: start;
+}
+
+.sidebar__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.sidebar__nav {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sidebar__nav a {
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.sidebar__nav a.active,
+.sidebar__nav a:hover {
+  background: rgba(15, 118, 110, 0.1);
+  color: var(--primary-strong);
+}
+
+.sidebar__footer {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  display: grid;
+  gap: 0.3rem;
+}
+
+.sidebar__footer strong {
+  color: var(--text);
+}

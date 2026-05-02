@@ -1,0 +1,13 @@
+.stars {
+  display: inline-flex;
+  gap: 0.2rem;
+  color: rgba(239, 125, 66, 0.22);
+}
+
+.stars span {
+  font-size: 1rem;
+}
+
+.stars span.filled {
+  color: var(--accent);
+}

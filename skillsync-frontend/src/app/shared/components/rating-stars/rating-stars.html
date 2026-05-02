@@ -1,0 +1,5 @@
+<div class="stars" [attr.aria-label]="'Rating ' + rating() + ' out of 5'">
+  @for (star of stars(); track $index) {
+    <span [class.filled]="star">★</span>
+  }
+</div>

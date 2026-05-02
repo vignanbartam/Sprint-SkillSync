@@ -1,0 +1,152 @@
+<section class="page-shell">
+  <div class="mentor-hero">
+    <div>
+      <span class="eyebrow">Mentor hub</span>
+      <h1 class="section-title">Mentor Hub</h1>
+      <p class="section-copy">Apply to become a mentor, manage your applications, and look up mentor reviews.</p>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="message error">{{ errorMessage() }}</div>
+  }
+
+  <div class="mentor-grid">
+    <section class="glass-panel mentor-panel">
+      <h2>Available skills</h2>
+      @if (loadingSkills()) {
+        <app-loader label="Loading skills..."></app-loader>
+      } @else {
+        <input
+          class="skill-search"
+          type="search"
+          placeholder="Search skills"
+          [value]="skillSearch()"
+          (input)="updateSkillSearch($any($event.target).value)"
+        />
+        <div class="skill-list">
+          @for (skill of filteredSkills(); track skill.id) {
+            <label class="skill-item">
+              <input type="checkbox" (change)="toggleSkill(skill.id, $any($event.target).checked)" />
+              <div>
+                <strong>{{ skill.name }}</strong>
+                <p>{{ skill.description }}</p>
+              </div>
+            </label>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="glass-panel mentor-panel">
+      <h2>Apply to become a mentor</h2>
+      @if (activeApplication(); as application) {
+        <article class="application-summary">
+          <span class="status-pill">{{ application.status }}</span>
+          <strong>Application {{ displayId(application.id) }}</strong>
+          <p>{{ application.experience }} years experience</p>
+          <div class="chip-row">
+            @for (skillId of application.skillIds; track skillId) {
+              <span class="chip">{{ skillName(skillId) }}</span>
+            }
+          </div>
+          @if (currentProfile()?.biodataUrl) {
+            <a class="btn-muted" [href]="currentProfile()?.biodataUrl" target="_blank" rel="noopener">View biodata</a>
+          }
+          @if (application.status === 'PENDING') {
+            <button class="btn-danger" type="button" (click)="revokeApplication(application.id)">Revoke</button>
+          }
+        </article>
+      } @else {
+        <form class="field-grid" [formGroup]="mentorApplicationForm" (ngSubmit)="submitApplication()">
+          <div class="field">
+            <label for="mentorBiodata">Biodata</label>
+            <label class="btn-ghost mentor-upload">
+              <input id="mentorBiodata" type="file" accept=".pdf,.doc,.docx" (change)="uploadBiodata($event)" />
+              {{ currentProfile()?.hasBiodata ? 'Replace biodata' : 'Upload biodata' }}
+            </label>
+            @if (currentProfile()?.biodataUrl) {
+              <a class="btn-muted" [href]="currentProfile()?.biodataUrl" target="_blank" rel="noopener">View biodata</a>
+            }
+          </div>
+          <div class="field">
+            <label for="experience">Experience in years</label>
+            <input id="experience" type="number" min="1" formControlName="experience" />
+          </div>
+          <button class="btn" type="submit">Submit application</button>
+        </form>
+      }
+
+      @if (applyMessage()) {
+        <div class="message success">{{ applyMessage() }}</div>
+      }
+
+      @if (pastApplications().length) {
+        <div class="application-status-list">
+          @for (application of pastApplications(); track application.id) {
+            <article>
+              <strong>Application {{ displayId(application.id) }}</strong>
+              <span class="status-pill">{{ application.status }}</span>
+              <p>{{ application.experience }} years experience</p>
+              <div class="chip-row">
+                @for (skillId of application.skillIds; track skillId) {
+                  <span class="chip">{{ skillName(skillId) }}</span>
+                }
+              </div>
+              @if (application.status === 'PENDING') {
+                <button class="btn-danger" type="button" (click)="revokeApplication(application.id)">Revoke</button>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  </div>
+
+  <div class="mentor-grid">
+    <section class="glass-panel mentor-panel">
+      <h2>Lookup mentor reviews</h2>
+      <form class="field-grid mentor-panel__form" [formGroup]="reviewLookupForm" (ngSubmit)="loadReviews()">
+        <div class="field">
+          <label for="lookupMentorName">Mentor name</label>
+          <input id="lookupMentorName" type="search" formControlName="mentorName" placeholder="Search mentor by name" />
+        </div>
+        <button class="btn-muted" type="submit">Fetch reviews</button>
+      </form>
+
+      <div class="mentor-lookup-list">
+        @for (mentor of filteredMentors().slice(0, 5); track mentor.id) {
+          <button type="button" (click)="lookupMentor(mentor)">
+            {{ mentor.name || mentor.email }}
+          </button>
+        }
+      </div>
+
+      @if (loadingReviews()) {
+        <app-loader label="Loading reviews..."></app-loader>
+      } @else if (selectedLookupMentor()) {
+        <article class="mentor-review-summary">
+          <span class="id-chip">Mentor reviews</span>
+          <h3>{{ mentorName(selectedLookupMentor()) }}</h3>
+          <app-rating-stars [rating]="averageRating()"></app-rating-stars>
+          <p>{{ reviews().length }} reviews collected for {{ mentorName(selectedLookupMentor()) }}.</p>
+        </article>
+
+        <div class="review-list">
+          @for (review of reviews(); track review.id ?? $index) {
+            <article class="review-item">
+              <div class="review-item__head">
+                <strong>{{ mentorName(selectedLookupMentor()) }}</strong>
+                <app-rating-stars [rating]="review.rating"></app-rating-stars>
+              </div>
+              <p>{{ review.comment }}</p>
+            </article>
+          } @empty {
+            <p class="section-copy">No reviews returned for {{ mentorName(selectedLookupMentor()) }}.</p>
+          }
+        </div>
+      }
+    </section>
+
+  </div>
+</section>

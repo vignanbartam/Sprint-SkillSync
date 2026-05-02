@@ -1,0 +1,163 @@
+<section class="page-shell">
+  <div>
+    <h1 class="section-title">Groups</h1>
+    <p class="section-copy">
+      Create groups, join instantly, manage members, and chat with group members in real time.
+    </p>
+  </div>
+
+  @if (successMessage()) {
+    <div class="message success">{{ successMessage() }}</div>
+  }
+
+  @if (errorMessage()) {
+    <div class="message error">{{ errorMessage() }}</div>
+  }
+
+  <div class="groups-grid">
+    <section class="glass-panel group-panel">
+      <h2>Create group</h2>
+      <form class="field-grid" [formGroup]="createForm" (ngSubmit)="createGroup()">
+        <div class="field">
+          <label for="groupName">Name</label>
+          <input id="groupName" type="text" formControlName="name" />
+        </div>
+        <div class="field">
+          <label for="groupDescription">Description</label>
+          <textarea id="groupDescription" formControlName="description"></textarea>
+        </div>
+        <button class="btn" type="submit">Create</button>
+      </form>
+    </section>
+
+    <section class="glass-panel group-panel">
+      <h2>Member management</h2>
+      @if (managedGroup(); as group) {
+        <div class="group-panel__header">
+          <div>
+            <h3>{{ group.name }}</h3>
+            <p>Group {{ displayId(group.id) }} · Creator {{ displayId(group.createdBy) }}</p>
+          </div>
+          <button class="btn-ghost" type="button" (click)="manageGroup(group)">Refresh members</button>
+        </div>
+
+        <div class="member-list">
+          @for (member of managedMembers(); track member.id) {
+            <article class="member-item">
+              <div>
+                <strong>{{ member.displayName || ('User ' + displayId(member.userId)) }}</strong>
+                <a [routerLink]="['/profile', member.userId]">ID {{ displayId(member.userId) }}</a>
+                <span class="status-pill">{{ member.status }}</span>
+              </div>
+              <button
+                class="btn-danger"
+                type="button"
+                (click)="removeMember(group.id, member.userId)"
+                [disabled]="member.userId === currentUser()?.id && currentRole() !== 'ROLE_ADMIN'"
+              >
+                Remove
+              </button>
+            </article>
+          } @empty {
+            <p class="empty-state">No members found for this group.</p>
+          }
+        </div>
+      } @else {
+        <p class="section-copy">Use Manage on a group you created. Admins can manage every group.</p>
+      }
+    </section>
+  </div>
+
+  <section class="group-workspace">
+    <div class="glass-panel group-panel">
+      <div class="group-panel__header">
+        <div>
+          <h2>Available groups</h2>
+          @if (currentUser(); as user) {
+            <p>Join uses your current token and user ID #{{ displayId(user.id) }}.</p>
+          }
+        </div>
+        <button class="btn-ghost" type="button" (click)="loadGroups()">Refresh</button>
+      </div>
+
+      <div class="group-list">
+        @for (group of groups(); track group.id) {
+          <article class="group-item">
+            <div>
+              <span class="id-chip">ID {{ displayId(group.id) }}</span>
+              <h3>{{ group.name }}</h3>
+              <p>{{ group.description }}</p>
+              <a class="status-pill" [routerLink]="['/profile', group.createdBy]">Creator {{ displayId(group.createdBy) }}</a>
+            </div>
+            <div class="group-panel__actions">
+              <button
+                class="btn"
+                type="button"
+                (click)="joinGroup(group.id)"
+                [disabled]="alreadyJoined(group)"
+              >
+                {{ alreadyJoined(group) ? 'Joined' : 'Join' }}
+              </button>
+              @if (canManageGroup(group)) {
+                <button class="btn-muted" type="button" (click)="manageGroup(group)">Manage</button>
+                <button class="btn-danger" type="button" (click)="deleteGroup(group)">Delete</button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    </div>
+
+    <div class="glass-panel group-panel chat-panel">
+      <div class="group-panel__header">
+        <div>
+          <h2>Group chat</h2>
+          <p>{{ chatStatus() }}</p>
+        </div>
+        <button class="btn-ghost" type="button" (click)="loadMyGroups()">Refresh mine</button>
+      </div>
+
+      <div class="chat-layout">
+        <aside class="chat-groups" aria-label="My groups">
+          @for (group of myGroups(); track group.id) {
+            <button
+              class="chat-group"
+              type="button"
+              [class.active]="selectedGroup()?.id === group.id"
+              (click)="selectGroup(group)"
+            >
+              <strong>{{ group.name }}</strong>
+              <span>ID {{ displayId(group.id) }} · Creator {{ displayId(group.createdBy) }}</span>
+            </button>
+          } @empty {
+            <p class="empty-state">Create or join a group to chat.</p>
+          }
+        </aside>
+
+        <section class="chat-room" aria-label="Messages">
+          <div class="messages">
+            @for (message of messages(); track message.id) {
+              <article class="chat-message" [class.mine]="message.senderId === currentUser()?.id">
+                <span>{{ message.senderName || ('Sender ' + displayId(message.senderId)) }} · ID {{ displayId(message.senderId) }}</span>
+                <p>{{ message.content }}</p>
+                <time>{{ message.timestamp | date: 'short' }}</time>
+              </article>
+            } @empty {
+              <p class="empty-state">No messages yet.</p>
+            }
+          </div>
+
+          <form class="message-form" [formGroup]="messageForm" (ngSubmit)="sendMessage()">
+            <input
+              type="text"
+              formControlName="content"
+              placeholder="Message this group"
+              [readOnly]="!selectedGroup()"
+            />
+            <button class="btn" type="submit" [disabled]="!selectedGroup()">Send</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </section>
+</section>

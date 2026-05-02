@@ -1,0 +1,70 @@
+# =============================================================
+#  SkillSync — SonarQube (Standalone)
+#
+#  Run SEPARATELY from the main project:
+#    docker compose -f docker-compose.sonar.yml up -d
+#
+#  Then scan your code:
+#    ./sonar-scan.sh YOUR_TOKEN
+#
+#  Open:  http://localhost:9000  (admin / admin)
+#  Stop:  docker compose -f docker-compose.sonar.yml down
+# =============================================================
+
+services:
+
+  sonarqube-db:
+    image: postgres:15
+    container_name: skillsync-sonar-db
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonar_db_data:/var/lib/postgresql/data
+    networks:
+      - sonar-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonarqube"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: on-failure:3
+
+  sonarqube:
+    image: sonarqube:10.4-community
+    container_name: skillsync-sonarqube
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+      SONAR_CE_JAVAOPTS: "-Xmx512m -Xms128m"
+      SONAR_WEB_JAVAOPTS: "-Xmx512m -Xms128m"
+      SONAR_SEARCH_JAVAOPTS: "-Xmx512m -Xms512m -XX:MaxDirectMemorySize=256m"
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+      - sonar_logs:/opt/sonarqube/logs
+    networks:
+      - sonar-net
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    restart: on-failure:3
+
+volumes:
+  sonar_db_data:
+  sonar_data:
+  sonar_extensions:
+  sonar_logs:
+
+networks:
+  sonar-net:
+    driver: bridge

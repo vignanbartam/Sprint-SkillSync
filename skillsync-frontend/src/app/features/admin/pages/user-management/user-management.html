@@ -1,0 +1,216 @@
+<section class="page-shell">
+  <div class="admin-hero">
+    <div>
+      <h1 class="section-title">Admin</h1>
+      <p class="section-copy">Review mentor applications, manage accounts, and maintain skills.</p>
+    </div>
+  </div>
+
+  @if (message()) {
+    <div class="message success">{{ message() }}</div>
+  }
+
+  @if (errorMessage()) {
+    <div class="message error">{{ errorMessage() }}</div>
+  }
+
+  @if (pendingAction(); as action) {
+    <section class="admin-reason glass-panel">
+      <div>
+        <h2>{{ action.label }}</h2>
+        <p>This reason will be included in the email notification.</p>
+      </div>
+      <form [formGroup]="reasonForm" (ngSubmit)="confirmPendingAction()">
+        <div class="field">
+          <label for="adminReason">Reason</label>
+          <textarea id="adminReason" formControlName="reason" placeholder="Write a clear reason for this action"></textarea>
+        </div>
+        <div class="admin-card-actions">
+          <button class="btn-danger" type="submit">Confirm</button>
+          <button class="btn-muted" type="button" (click)="cancelPendingAction()">Cancel</button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="glass-panel admin-panel admin-panel--wide">
+    <div class="admin-panel__head">
+      <div>
+        <h2>Users and mentors</h2>
+        <p>{{ filteredUsers().length }} accounts shown</p>
+      </div>
+      <div class="admin-tools">
+        <input
+          type="search"
+          placeholder="Search user, mentor, ID"
+          [value]="userSearch()"
+          (input)="updateUserSearch($any($event.target).value)"
+        />
+        <select [value]="userFilter()" (change)="updateUserFilter($any($event.target).value)">
+          <option value="ALL">All roles</option>
+          <option value="ROLE_USER">Users</option>
+          <option value="ROLE_MENTOR">Mentors</option>
+          <option value="ROLE_ADMIN">Admins</option>
+        </select>
+        <button class="btn-ghost" type="button" (click)="loadUsers()">Refresh</button>
+      </div>
+    </div>
+
+    <div class="admin-user-grid">
+      @for (user of filteredUsers(); track user.id) {
+        <article class="admin-user-card">
+          <div>
+            <span class="id-chip">ID {{ displayId(user.id) }}</span>
+            <h3>{{ user.name || user.email }}</h3>
+            <p>{{ user.email }}</p>
+            <span class="status-pill">{{ user.role }}</span>
+          </div>
+          <div class="admin-card-actions">
+            <a class="btn-muted" [routerLink]="['/profile', user.id]">View profile</a>
+            @if (user.role === 'ROLE_MENTOR') {
+              <button class="btn-ghost" type="button" (click)="makeUser(user)">Make user</button>
+            }
+            @if (user.role !== 'ROLE_ADMIN') {
+              <button class="btn-danger" type="button" (click)="deleteUser(user)">Delete</button>
+            }
+          </div>
+        </article>
+      } @empty {
+        <p class="section-copy">No accounts match these filters.</p>
+      }
+    </div>
+  </section>
+
+  <section class="glass-panel admin-panel admin-panel--wide">
+    <div class="admin-panel__head">
+      <div>
+        <h2>Sessions</h2>
+        <p>{{ filteredSessions().length }} sessions shown</p>
+      </div>
+      <div class="admin-tools admin-tools--single">
+        <input
+          type="search"
+          placeholder="Search session, user, mentor, email, time"
+          [value]="sessionSearch()"
+          (input)="updateSessionSearch($any($event.target).value)"
+        />
+        <button class="btn-ghost" type="button" (click)="loadSessions()">Refresh</button>
+      </div>
+    </div>
+
+    <div class="admin-session-list">
+      @for (session of paginatedSessions(); track session.id) {
+        <article class="admin-session-item">
+          <div>
+            <span class="id-chip">Session {{ session.id }}</span>
+            <strong>User {{ session.userId }} · {{ session.userProfile?.name || session.userProfile?.email || 'Unknown user' }}</strong>
+            <p>{{ session.userProfile?.email || 'User email unavailable' }}</p>
+          </div>
+          <div>
+            <strong>Mentor {{ session.mentorId }} · {{ session.mentorProfile?.name || session.mentorProfile?.email || 'Unknown mentor' }}</strong>
+            <p>{{ session.mentorProfile?.email || 'Mentor email unavailable' }}</p>
+          </div>
+          <div>
+            <span class="status-pill">{{ session.status }}</span>
+            <p>{{ session.timeSlot || 'Time not scheduled' }}</p>
+            <p>{{ session.durationMinutes || 30 }} min · {{ (session.sessionPrice ?? 0) | currency:'USD':'symbol':'1.0-0' }}</p>
+          </div>
+        </article>
+      } @empty {
+        <p class="section-copy">No sessions match this search.</p>
+      }
+    </div>
+
+    <div class="pagination">
+      <button class="btn-muted" type="button" (click)="setSessionPage(sessionPage() - 1)" [disabled]="sessionPage() === 1">Previous</button>
+      <span>Page {{ sessionPage() }} of {{ sessionPageCount() }}</span>
+      <button class="btn-muted" type="button" (click)="setSessionPage(sessionPage() + 1)" [disabled]="sessionPage() === sessionPageCount()">Next</button>
+    </div>
+  </section>
+
+  <div class="admin-grid">
+    <section class="glass-panel admin-panel">
+      <h2>Add skill</h2>
+      <form class="field-grid" [formGroup]="skillForm" (ngSubmit)="addSkill()">
+        <div class="field">
+          <label for="skillName">Skill name</label>
+          <input id="skillName" type="text" formControlName="name" />
+        </div>
+        <div class="field">
+          <label for="skillDescription">Description</label>
+          <textarea id="skillDescription" formControlName="description"></textarea>
+        </div>
+        <button class="btn" type="submit">Add skill</button>
+      </form>
+    </section>
+
+    <section class="glass-panel admin-panel">
+      <h2>Current skills</h2>
+      <div class="admin-tools admin-tools--single">
+        <input
+          type="search"
+          placeholder="Search skills"
+          [value]="skillSearch()"
+          (input)="updateSkillSearch($any($event.target).value)"
+        />
+        <button class="btn-ghost" type="button" (click)="loadSkills()">Refresh</button>
+      </div>
+      <div class="admin-skill-list">
+        @for (skill of filteredSkills(); track skill.id) {
+          <article class="admin-skill-item">
+            <div>
+              <strong>#{{ displayId(skill.id) }} {{ skill.name }}</strong>
+              <p>{{ skill.description }}</p>
+            </div>
+            <button class="btn-danger" type="button" (click)="deleteSkillDirect(skill.id)">
+              Delete
+            </button>
+          </article>
+        } @empty {
+          <p class="section-copy">No skills found.</p>
+        }
+      </div>
+    </section>
+  </div>
+
+  <section class="glass-panel admin-panel admin-panel--wide">
+    <div class="admin-panel__head">
+      <div>
+        <h2>Mentor applications</h2>
+        <p>Pending applications are removed from this list after approval or rejection.</p>
+      </div>
+      <button class="btn-ghost" type="button" (click)="loadApplications()">Refresh</button>
+    </div>
+
+    <div class="admin-application-list">
+      @for (application of applications(); track application.id) {
+        <article class="admin-application-item">
+          <div>
+            <span class="id-chip">Application {{ displayId(application.id) }}</span>
+            <h3>{{ userName(application.userId) }}</h3>
+            <p>{{ application.experience }} years experience</p>
+            <div class="chip-row">
+              @for (skillId of application.skillIds; track skillId) {
+                <span class="chip">{{ skillName(skillId) }}</span>
+              }
+            </div>
+            @if (biodataUrl(application.userId); as url) {
+              <a class="btn-muted" [href]="url" target="_blank" rel="noopener">View biodata</a>
+            }
+          </div>
+
+          <div class="admin-application-item__actions">
+            <span class="status-pill">{{ application.status }}</span>
+            <a class="btn-muted" [routerLink]="['/profile', application.userId]">View profile</a>
+            @if (application.status === 'PENDING') {
+              <button class="btn" type="button" (click)="approveFromList(application.id)">Approve</button>
+              <button class="btn-danger" type="button" (click)="rejectFromList(application.id)">Reject</button>
+            }
+          </div>
+        </article>
+      } @empty {
+        <p class="section-copy">No mentor applications found.</p>
+      }
+    </div>
+  </section>
+</section>

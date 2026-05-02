@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(239, 125, 66, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.18), transparent 30%),
+    linear-gradient(180deg, #fdf5eb 0%, #f4ede3 100%);
+  color: var(--text);
+}
+
+.page-shell {
+  display: grid;
+  gap: 1.15rem;
+  align-content: start;
+}
+
+.glass-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.section-copy {
+  margin: 0;
+  color: var(--muted);
+}

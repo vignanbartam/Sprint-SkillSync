@@ -1,0 +1,86 @@
+<section class="auth-page">
+  <div class="auth-page__hero">
+    <span class="auth-page__badge">Create account</span>
+    <h1>Join first. Grow into mentor later.</h1>
+    <p>
+      Registration maps directly to `POST /auth/register`. Name and age are required, and
+      new accounts begin with `ROLE_USER`.
+    </p>
+  </div>
+
+  <form class="auth-card glass-panel" [formGroup]="form" (ngSubmit)="submit()">
+    <div>
+      <h2>Register</h2>
+      <p>Create your learner account with the required personal details.</p>
+    </div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label for="register-name">Name</label>
+        <input id="register-name" type="text" formControlName="name" placeholder="Your full name" />
+        @if (hasError('name')) {
+          <small class="field-error">Name is required.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="register-age">Age</label>
+        <input id="register-age" type="number" min="1" formControlName="age" placeholder="Your age" />
+        @if (hasError('age')) {
+          <small class="field-error">Enter a valid age.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="register-email">Email</label>
+        <input id="register-email" type="email" formControlName="email" placeholder="you@example.com" pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$" />
+        @if (hasError('email')) {
+          <small class="field-error">Enter a valid email address.</small>
+        }
+      </div>
+
+      @if (otpSent()) {
+        <div class="field">
+          <label for="register-otp">Email OTP</label>
+          <input id="register-otp" type="text" formControlName="otp" placeholder="6 digit code" />
+        </div>
+      }
+
+      <div class="field">
+        <label for="register-password">Password</label>
+        <input
+          id="register-password"
+          type="password"
+          formControlName="password"
+          placeholder="Minimum 6 characters"
+        />
+        @if (hasError('password')) {
+          <small class="field-error">Password must be at least 6 characters.</small>
+        }
+      </div>
+    </div>
+
+    @if (successMessage()) {
+      <div class="message success">{{ successMessage() }}</div>
+    }
+
+    @if (errorMessage()) {
+      <div class="message error">{{ errorMessage() }}</div>
+    }
+
+    @if (!otpSent()) {
+      <button class="btn" type="submit" [disabled]="loading()">Send OTP</button>
+    } @else {
+      <button class="btn" type="button" [disabled]="loading()" (click)="verifyOtp()">Verify and create account</button>
+    }
+
+    @if (loading()) {
+      <app-loader label="Creating account..."></app-loader>
+    }
+
+    <p class="auth-card__foot">
+      Already registered?
+      <a routerLink="/login">Back to login</a>
+    </p>
+  </form>
+</section>

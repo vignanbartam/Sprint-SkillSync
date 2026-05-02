@@ -1,0 +1,29 @@
+.mentor-card {
+  padding: 1.3rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.mentor-card__header {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.mentor-card__header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.mentor-card__eyebrow {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mentor-card__stats {
+  margin: 0;
+  color: var(--muted);
+}

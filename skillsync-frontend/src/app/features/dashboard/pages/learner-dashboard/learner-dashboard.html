@@ -1,0 +1,102 @@
+<section class="page-shell">
+  <div class="dashboard-hero glass-panel">
+    <div>
+      <span class="dashboard-hero__eyebrow">Welcome back</span>
+      <h1 class="section-title">Your SkillSync control room</h1>
+      <p class="section-copy">
+        This dashboard surfaces your skills, groups, and personal notifications.
+      </p>
+    </div>
+
+    @if (user(); as currentUser) {
+      <div class="dashboard-hero__meta">
+        <div>
+          <span>User ID</span>
+          <strong>#{{ displayId(currentUser.id) }}</strong>
+        </div>
+        <div>
+          <span>Role</span>
+          <strong>{{ currentUser.role }}</strong>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <app-loader label="Loading dashboard..."></app-loader>
+  } @else {
+    @if (errorMessage()) {
+      <div class="message error">{{ errorMessage() }}</div>
+    }
+
+    <div class="card-grid">
+      <article class="dashboard-card glass-panel">
+        <span class="dashboard-card__label">Available skills</span>
+        <strong>{{ skills().length }}</strong>
+        <p>Skills available for learning and mentor profiles.</p>
+      </article>
+
+      <article class="dashboard-card glass-panel">
+        <span class="dashboard-card__label">Open groups</span>
+        <strong>{{ groups().length }}</strong>
+        <p>Groups you can join and collaborate in.</p>
+      </article>
+
+      <article class="dashboard-card glass-panel">
+        <span class="dashboard-card__label">Notifications</span>
+        <strong>{{ notifications().length }}</strong>
+        <p>Direct inbox items for your account.</p>
+      </article>
+    </div>
+
+    <div class="dashboard-layout">
+      <section class="glass-panel dashboard-panel">
+        <div class="dashboard-panel__head">
+          <h2>Top skills</h2>
+          <p>Fetched from your backend skill service.</p>
+        </div>
+
+        <div class="chip-row">
+          @for (skill of skills(); track skill.id) {
+            <span class="chip">{{ skill.name }}</span>
+          }
+        </div>
+      </section>
+
+      <section class="glass-panel dashboard-panel">
+        <div class="dashboard-panel__head">
+          <h2>Latest notifications</h2>
+          <p>Notification history for the signed-in user.</p>
+        </div>
+
+        @if (notifications().length) {
+          <div class="notification-list">
+            @for (notification of notifications(); track notification.id) {
+              <article class="notification-item">
+                <div>
+                  <strong>{{ notification.type }}</strong>
+                  <span class="notification-date">{{ notification.createdAt ? (notification.createdAt | date:'medium') : 'Date unavailable' }}</span>
+                  <p>{{ notification.message }}</p>
+                </div>
+                <div class="notification-actions">
+                  <span class="status-pill">{{ notification.status }}</span>
+                  <button
+                    class="icon-button"
+                    type="button"
+                    title="Delete notification"
+                    aria-label="Delete notification"
+                    (click)="deleteNotification(notification.id)"
+                  >
+                    ×
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="section-copy">No notifications returned yet.</p>
+        }
+      </section>
+    </div>
+  }
+</section>

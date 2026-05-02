@@ -1,0 +1,123 @@
+.auth-page {
+  min-height: 100dvh;
+  padding: clamp(1rem, 3vw, 2rem);
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.05fr) minmax(340px, 460px);
+  align-items: center;
+}
+
+.auth-page__hero {
+  min-height: min(680px, calc(100dvh - 4rem));
+  border-radius: var(--radius-xl);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  display: grid;
+  align-content: end;
+  gap: 1rem;
+  color: white;
+  background:
+    linear-gradient(180deg, rgba(18, 52, 59, 0.2), rgba(18, 52, 59, 0.86)),
+    url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1400&q=80') center/cover;
+  box-shadow: var(--shadow);
+}
+
+.auth-page__hero h1 {
+  max-width: 720px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.3rem, 5.6vw, 5.2rem);
+  line-height: 1;
+}
+
+.auth-page__hero p {
+  max-width: 42rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 1.05rem;
+}
+
+.auth-page__badge,
+.auth-card__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  color: var(--accent);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.auth-page__badge {
+  color: white;
+}
+
+.auth-page__stats {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.auth-page__stats div {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: var(--radius-md);
+  padding: 0.9rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.auth-page__stats strong,
+.auth-page__stats span {
+  display: block;
+}
+
+.auth-page__stats span {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.auth-card {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  display: grid;
+  gap: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow);
+}
+
+.auth-card h2 {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+}
+
+.auth-card p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+}
+
+.auth-card__submit {
+  width: 100%;
+}
+
+.auth-card__foot {
+  text-align: center;
+}
+
+.auth-card__foot a {
+  color: var(--primary-strong);
+  font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-page__hero {
+    min-height: 420px;
+  }
+}
+
+@media (max-width: 560px) {
+  .auth-page__stats {
+    grid-template-columns: 1fr;
+  }
+}

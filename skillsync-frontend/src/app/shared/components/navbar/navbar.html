@@ -1,0 +1,32 @@
+<header class="navbar glass-panel">
+  <a class="navbar__brand" routerLink="/dashboard">
+    <span class="navbar__logo">S</span>
+    <div>
+      <strong>SkillSync</strong>
+      <p>Frontend aligned to your live backend</p>
+    </div>
+  </a>
+
+  <div class="navbar__actions">
+    @if (authService.profile(); as profile) {
+      <div class="navbar__user-menu" (click)="$event.stopPropagation()">
+        <button class="btn-ghost navbar__menu-trigger" type="button" (click)="toggleMenu()">
+          <span class="navbar__avatar">
+            {{ (profile.name || profile.email).charAt(0).toUpperCase() }}
+          </span>
+          <span class="navbar__user">
+            <span>{{ profile.name || profile.email }}</span>
+            <small>{{ profile.role }}</small>
+          </span>
+        </button>
+
+        @if (menuOpen()) {
+          <div class="navbar__menu glass-panel">
+            <a routerLink="/profile" (click)="closeMenu()">View Profile</a>
+            <button type="button" (click)="authService.logout()">Logout</button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</header>

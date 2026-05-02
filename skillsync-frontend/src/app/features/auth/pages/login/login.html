@@ -1,0 +1,53 @@
+<section class="auth-page">
+  <div class="auth-page__hero">
+    <span class="auth-page__badge">SkillSync</span>
+    <h1>Mentoring that runs on real workflows.</h1>
+    <p>Sign in to book sessions, manage groups, review mentor requests, and keep notifications in one place.</p>
+    <div class="auth-page__stats">
+      <div><strong>Live</strong><span>Auth</span></div>
+      <div><strong>Real</strong><span>Sessions</span></div>
+      <div><strong>Secure</strong><span>Roles</span></div>
+    </div>
+  </div>
+
+  <form class="auth-card" [formGroup]="form" (ngSubmit)="submit()">
+    <div>
+      <span class="auth-card__eyebrow">Welcome back</span>
+      <h2>Login</h2>
+      <p>Use your SkillSync account credentials.</p>
+    </div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email" placeholder="admin@gmail.com" autocomplete="email" />
+        @if (hasError('email')) {
+          <small class="field-error">Enter a valid email address.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" formControlName="password" placeholder="Enter password" autocomplete="current-password" />
+        @if (hasError('password')) {
+          <small class="field-error">Password is required.</small>
+        }
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="message error">{{ errorMessage() }}</div>
+    }
+
+    <button class="btn auth-card__submit" type="submit" [disabled]="loading()">Login</button>
+
+    @if (loading()) {
+      <app-loader label="Signing you in..."></app-loader>
+    }
+
+    <p class="auth-card__foot">
+      New user?
+      <a routerLink="/register">Create an account</a>
+    </p>
+  </form>
+</section>

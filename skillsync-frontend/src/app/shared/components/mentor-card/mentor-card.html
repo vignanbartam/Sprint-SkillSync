@@ -1,0 +1,16 @@
+<article class="mentor-card glass-panel">
+  <div class="mentor-card__header">
+    <span class="mentor-card__eyebrow">Mentor Reference</span>
+    <h3>Mentor #{{ displayId(mentorId()) }}</h3>
+  </div>
+
+  <app-rating-stars [rating]="averageRating()"></app-rating-stars>
+
+  <p class="mentor-card__stats">{{ reviewCount() }} reviews collected from the backend.</p>
+
+  <div class="chip-row">
+    @for (skill of skills(); track skill) {
+      <span class="chip">{{ skill }}</span>
+    }
+  </div>
+</article>

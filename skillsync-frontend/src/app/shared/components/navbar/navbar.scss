@@ -1,0 +1,120 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  position: relative;
+  z-index: 100;
+  overflow: visible;
+}
+
+.navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.navbar__brand strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.navbar__brand p {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.navbar__logo {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, var(--accent), #f3a15c);
+  color: white;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.navbar__user-menu {
+  position: relative;
+}
+
+.navbar__menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar__avatar {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 118, 110, 0.14);
+  color: var(--primary-strong);
+  font-weight: 800;
+}
+
+.navbar__user {
+  text-align: right;
+}
+
+.navbar__user span,
+.navbar__user small {
+  display: block;
+}
+
+.navbar__user small {
+  color: var(--muted);
+}
+
+.navbar__menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 14rem;
+  padding: 0.5rem;
+  display: grid;
+  gap: 0.25rem;
+  z-index: 1000;
+  background: var(--surface-strong);
+  box-shadow: 0 22px 60px rgba(17, 24, 39, 0.16);
+}
+
+.navbar__menu a,
+.navbar__menu button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-md);
+}
+
+.navbar__menu a:hover,
+.navbar__menu button:hover {
+  background: rgba(15, 118, 110, 0.08);
+}
+
+@media (max-width: 700px) {
+  .navbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .navbar__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

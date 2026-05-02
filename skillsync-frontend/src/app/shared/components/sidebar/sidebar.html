@@ -1,0 +1,20 @@
+<aside class="sidebar glass-panel">
+  <p class="sidebar__title">Workspace</p>
+
+  <nav class="sidebar__nav">
+    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/profile" routerLinkActive="active">Profile</a>
+    <a routerLink="/mentor-search" routerLinkActive="active">Search Mentors</a>
+    <a routerLink="/mentors" routerLinkActive="active">Mentor Hub</a>
+    <a routerLink="/sessions" routerLinkActive="active">Sessions</a>
+    <a routerLink="/groups" routerLinkActive="active">Groups</a>
+    <a *appRole="'ROLE_ADMIN'" routerLink="/admin" routerLinkActive="active">Admin</a>
+  </nav>
+
+  @if (authService.role(); as role) {
+    <div class="sidebar__footer">
+      <span>Signed in as</span>
+      <strong>{{ role }}</strong>
+    </div>
+  }
+</aside>

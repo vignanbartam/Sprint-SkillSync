@@ -1,0 +1,344 @@
+
+# =============================================================
+#  SkillSync — Full Stack Docker Compose
+#
+#  USAGE:
+#    docker-compose up --build        # first time (builds all images)
+#    docker-compose up -d             # start in background
+#    docker-compose down              # stop all
+#    docker-compose down -v           # stop + delete all data volumes
+#    docker-compose logs -f <service> # tail logs for one service
+#
+#  SWAGGER UI (after startup):
+#    http://localhost:8080/swagger-ui.html
+#
+#  FRONTEND:
+#    http://localhost:4000
+#
+#  EUREKA DASHBOARD:
+#    http://localhost:8761
+#
+#  RABBITMQ DASHBOARD:
+#    http://localhost:15672  (guest / guest)
+#
+#  SONARQUBE (run separately):
+#    docker compose -f docker-compose.sonar.yml up -d
+#    http://localhost:9000   (admin / admin)
+# =============================================================
+
+services:
+
+  # ─────────────────────────────────────────────────────────
+  #  INFRASTRUCTURE
+  # ─────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:15
+    container_name: skillsync-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Vignan@2004
+      POSTGRES_DB: skillsync_auth
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - skillsync-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+    restart: on-failure
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: skillsync-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - skillsync-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: on-failure:3
+
+  redis:
+    image: redis:7.2
+    container_name: skillsync-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - skillsync-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: on-failure:3
+
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: skillsync-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - skillsync-net
+    restart: on-failure:3
+
+
+  # ─────────────────────────────────────────────────────────
+  #  MICROSERVICES
+  # ─────────────────────────────────────────────────────────
+
+  eurekaserver:
+    build:
+      context: ./eurekaserver
+      dockerfile: Dockerfile.eurekaserver
+    container_name: skillsync-eureka
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    networks:
+      - skillsync-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    restart: on-failure:3
+
+  authservice:
+    build:
+      context: ./authservice
+      dockerfile: Dockerfile.authservice
+    container_name: skillsync-auth
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_auth
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Vignan@2004
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "10"
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - skillsync-net
+    restart: on-failure:3
+
+  skillservice:
+    build:
+      context: ./skillservice
+      dockerfile: Dockerfile.skillservice
+    container_name: skillsync-skill
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_skill
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Vignan@2004
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "10"
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - skillsync-net
+    restart: on-failure:3
+
+  sessionservice:
+    build:
+      context: ./sessionservice
+      dockerfile: Dockerfile.sessionservice
+    container_name: skillsync-session
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_session
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Vignan@2004
+      SPRING_RABBITMQ_HOST: rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "10"
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - skillsync-net
+    restart: on-failure:3
+
+  notificationservice:
+    build:
+      context: ./notificationservice
+      dockerfile: Dockerfile.notificationservice
+    container_name: skillsync-notification
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_notification
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Vignan@2004
+      SPRING_RABBITMQ_HOST: rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "10"
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      MAIL_USERNAME: vignanbaratam@gmail.com
+      MAIL_PASSWORD: iuietzxymlqztvzx
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - skillsync-net
+    restart: on-failure:3
+
+  reviewservice:
+    build:
+      context: ./reviewservice
+      dockerfile: Dockerfile.reviewservice
+    container_name: skillsync-review
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_review
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Vignan@2004
+      SPRING_DATA_REDIS_HOST: redis
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "10"
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - skillsync-net
+    restart: on-failure:3
+
+  groupservice:
+    build:
+      context: ./groupservice
+      dockerfile: Dockerfile.groupservice
+    container_name: skillsync-group
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillsync_group
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Vignan@2004
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "10"
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - skillsync-net
+    restart: on-failure:3
+
+  apigateway:
+    build:
+      context: ./apigateway
+      dockerfile: Dockerfile.apigateway
+    container_name: skillsync-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+      EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "10"
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - skillsync-net
+    restart: on-failure:3
+
+  frontend:
+    build:
+      context: ../skillsync-frontend
+      dockerfile: Dockerfile
+    container_name: skillsync-frontend
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      NG_ALLOWED_HOSTS: localhost,127.0.0.1,skillsync-frontend
+    depends_on:
+      - apigateway
+    networks:
+      - skillsync-net
+    restart: on-failure:3
+
+# ─────────────────────────────────────────────────────────
+#  VOLUMES
+# ─────────────────────────────────────────────────────────
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis_data:
+
+# ─────────────────────────────────────────────────────────
+#  NETWORK
+# ─────────────────────────────────────────────────────────
+
+networks:
+  skillsync-net:
+    driver: bridge

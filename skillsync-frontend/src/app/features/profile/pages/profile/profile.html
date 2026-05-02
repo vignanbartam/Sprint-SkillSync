@@ -1,0 +1,238 @@
+<section class="page-shell">
+  <div>
+    <h1 class="section-title">Profile</h1>
+    <p class="section-copy">
+      @if (viewingOwnProfile()) {
+        Update your personal details, profile picture, and mentor session pricing from one place.
+      } @else {
+        Viewing public profile details from the live user record.
+      }
+    </p>
+  </div>
+
+  @if (message()) {
+    <div class="message success">{{ message() }}</div>
+  }
+
+  @if (errorMessage()) {
+    <div class="message error">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <section class="glass-panel profile-panel">
+      <p class="section-copy">Loading profile...</p>
+    </section>
+  } @else if (profile(); as currentProfile) {
+    @if (isPublicMentorProfile()) {
+      <section class="mentor-profile-template">
+        <div class="mentor-profile-template__banner"></div>
+
+        <div class="mentor-profile-template__main">
+          <div class="mentor-profile-template__photo">
+            @if (currentProfile.profilePictureUrl) {
+              <img [src]="currentProfile.profilePictureUrl" [alt]="(currentProfile.name || currentProfile.email) + ' profile picture'" />
+            } @else {
+              <span>{{ (currentProfile.name || currentProfile.email).charAt(0).toUpperCase() }}</span>
+            }
+          </div>
+
+          <div class="mentor-profile-template__identity">
+            <span class="profile-id">ID {{ displayId(currentProfile.id) }}</span>
+            <h2>{{ currentProfile.name || currentProfile.email }}</h2>
+            <p>{{ currentProfile.about || 'This mentor has not added an about section yet.' }}</p>
+            <div class="mentor-profile-template__links">
+              @if (currentProfile.linkedinUrl) {
+                <a class="social-link" [href]="currentProfile.linkedinUrl" target="_blank" rel="noopener">
+                  <span>in</span> LinkedIn
+                </a>
+              }
+              @if (currentProfile.xUrl) {
+                <a class="social-link" [href]="currentProfile.xUrl" target="_blank" rel="noopener">
+                  <span>X</span> X
+                </a>
+              }
+              @if (currentProfile.instagramUrl) {
+                <a class="social-link" [href]="currentProfile.instagramUrl" target="_blank" rel="noopener">
+                  <span>◎</span> Instagram
+                </a>
+              }
+            </div>
+          </div>
+
+          <aside class="mentor-profile-template__sessions">
+            <h2>Available session</h2>
+            <div class="price-options">
+              @for (plan of sessionPlans(currentProfile); track plan.duration) {
+                <div class="price-option" [class.active]="plan.duration === 30">
+                  <strong>{{ plan.duration }} min | {{ plan.price | currency:'USD':'symbol':'1.0-0' }}</strong>
+                  <span>{{ plan.label }}</span>
+                </div>
+              }
+            </div>
+            <a class="btn" routerLink="/mentor-search">Book Session</a>
+          </aside>
+        </div>
+
+        <div class="mentor-profile-template__details">
+          <section>
+            <h2>Overview</h2>
+            <p><strong>Email:</strong> {{ currentProfile.email }}</p>
+            @if (currentProfile.phoneNumber) {
+              <p><strong>Phone:</strong> {{ currentProfile.phoneNumber }}</p>
+            }
+            @if (currentProfile.address) {
+              <p><strong>Location:</strong> {{ currentProfile.address }}</p>
+            }
+            @if (currentProfile.age) {
+              <p><strong>Age:</strong> {{ currentProfile.age }}</p>
+            }
+            @if (currentProfile.mentorExperience) {
+              <p><strong>Experience:</strong> {{ currentProfile.mentorExperience }} years</p>
+            }
+            @if (currentProfile.biodataUrl) {
+              <a class="btn-muted" [href]="currentProfile.biodataUrl" target="_blank" rel="noopener">View biodata</a>
+            }
+          </section>
+
+          <section>
+            <h2>Skills</h2>
+            <div class="chip-row">
+              @for (skill of skillNames(currentProfile); track skill) {
+                <span class="chip">{{ skill }}</span>
+              } @empty {
+                <span class="chip">No approved skills listed</span>
+              }
+            </div>
+          </section>
+        </div>
+      </section>
+    } @else {
+    <div class="profile-grid">
+      <section class="glass-panel profile-panel profile-panel--media">
+        <div class="profile-avatar">
+          @if (currentProfile.profilePictureUrl) {
+            <img [src]="currentProfile.profilePictureUrl" [alt]="(currentProfile.name || currentProfile.email) + ' profile picture'" />
+          } @else {
+            <span>{{ (currentProfile.name || currentProfile.email).charAt(0).toUpperCase() }}</span>
+          }
+        </div>
+
+        <div>
+          <h2>{{ currentProfile.name || 'Complete your profile' }}</h2>
+          <p>{{ currentProfile.email }}</p>
+          <span class="profile-id">ID {{ displayId(currentProfile.id) }}</span>
+          <span class="status-pill">{{ currentProfile.role }}</span>
+        </div>
+
+        @if (viewingOwnProfile()) {
+          <label class="btn-ghost profile-upload">
+            <input type="file" accept="image/*" (change)="uploadProfilePicture($event)" />
+            Upload profile picture
+          </label>
+        }
+
+          @if (isMentor() && viewingOwnProfile()) {
+          <label class="btn-ghost profile-upload">
+            <input type="file" accept=".pdf,.doc,.docx" (change)="uploadBiodata($event)" />
+            Upload biodata
+          </label>
+
+          @if (currentProfile.biodataUrl) {
+            <a class="btn-muted" [href]="currentProfile.biodataUrl" target="_blank" rel="noopener">
+              View biodata
+            </a>
+          }
+          @if (!viewingOwnProfile() && currentProfile.biodataUrl) {
+            <a class="btn-muted" [href]="currentProfile.biodataUrl" target="_blank" rel="noopener">
+              View biodata
+            </a>
+          }
+          <button class="btn-danger" type="button" (click)="switchToUser()">Switch to user</button>
+        }
+      </section>
+
+      <section class="glass-panel profile-panel">
+        <h2>{{ viewingOwnProfile() ? 'Edit details' : 'Profile details' }}</h2>
+        <form class="field-grid" [formGroup]="form" (ngSubmit)="saveProfile()">
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" type="text" formControlName="name" [readOnly]="!viewingOwnProfile()" />
+          </div>
+          <div class="field">
+            <label for="age">Age</label>
+            <input id="age" type="number" min="1" formControlName="age" [readOnly]="!viewingOwnProfile()" />
+          </div>
+          <div class="field">
+            <label for="dob">Date of birth</label>
+            <input id="dob" type="date" formControlName="dob" [readOnly]="!viewingOwnProfile()" />
+          </div>
+          <div class="field">
+            <label for="address">Address</label>
+            <textarea id="address" formControlName="address" [readOnly]="!viewingOwnProfile()"></textarea>
+          </div>
+          <div class="field">
+            <label for="phoneNumber">Phone number</label>
+            <input id="phoneNumber" type="text" formControlName="phoneNumber" [readOnly]="!viewingOwnProfile()" />
+          </div>
+          <div class="field">
+            <label for="about">About</label>
+            <textarea id="about" formControlName="about" [readOnly]="!viewingOwnProfile()"></textarea>
+          </div>
+          <div class="field">
+            <label for="linkedinUrl">LinkedIn profile</label>
+            <input id="linkedinUrl" type="url" formControlName="linkedinUrl" [readOnly]="!viewingOwnProfile()" />
+          </div>
+          <div class="field">
+            <label for="xUrl">X profile</label>
+            <input id="xUrl" type="url" formControlName="xUrl" [readOnly]="!viewingOwnProfile()" />
+          </div>
+          <div class="field">
+            <label for="instagramUrl">Instagram profile</label>
+            <input id="instagramUrl" type="url" formControlName="instagramUrl" [readOnly]="!viewingOwnProfile()" />
+          </div>
+          @if (isMentor()) {
+            <div class="mentor-pricing">
+              <h3>Mentor skills</h3>
+              <div class="profile-skill-grid">
+                @for (skill of skills(); track skill.id) {
+                  <label class="profile-skill-item">
+                    <input
+                      type="checkbox"
+                      [checked]="selectedSkillIds().includes(skill.id)"
+                      [disabled]="!viewingOwnProfile()"
+                      (change)="toggleMentorSkill(skill.id, $any($event.target).checked)"
+                    />
+                    <span>{{ skill.name }}</span>
+                  </label>
+                } @empty {
+                  <p class="section-copy">No skills available.</p>
+                }
+              </div>
+            </div>
+            <div class="mentor-pricing">
+              <h3>Session pricing</h3>
+              <div class="pricing-grid">
+                <div class="field">
+                  <label for="quickSessionPrice">15 min</label>
+                  <input id="quickSessionPrice" type="number" min="0" formControlName="quickSessionPrice" [readOnly]="!viewingOwnProfile()" />
+                </div>
+                <div class="field">
+                  <label for="focusedSessionPrice">30 min</label>
+                  <input id="focusedSessionPrice" type="number" min="0" formControlName="focusedSessionPrice" [readOnly]="!viewingOwnProfile()" />
+                </div>
+                <div class="field">
+                  <label for="deepSessionPrice">60 min</label>
+                  <input id="deepSessionPrice" type="number" min="0" formControlName="deepSessionPrice" [readOnly]="!viewingOwnProfile()" />
+                </div>
+              </div>
+            </div>
+          }
+          @if (viewingOwnProfile()) {
+            <button class="btn" type="submit">Save profile</button>
+          }
+        </form>
+      </section>
+    </div>
+    }
+  }
+</section>

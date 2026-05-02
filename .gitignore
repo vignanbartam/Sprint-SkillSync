@@ -1,0 +1,30 @@
+# GENERAL
+.DS_Store
+*.log
+
+# SPRING BOOT
+target/
+*.jar
+*.war
+*.class
+
+# GRADLE
+.gradle/
+build/
+
+# ANGULAR
+node_modules/
+dist/
+.angular/
+.cache/
+coverage/
+
+# ENV
+.env
+application.properties
+application.yml
+
+# IDE
+.vscode/
+.idea/
+*.iml
